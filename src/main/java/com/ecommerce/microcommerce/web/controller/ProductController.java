@@ -16,6 +16,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -27,11 +28,8 @@ public class ProductController {
     @Autowired
     private ProductDao productDao;
 
-
     //Récupérer la liste des produits
-
     @RequestMapping(value = "/Produits", method = RequestMethod.GET)
-
     public MappingJacksonValue listeProduits() {
 
         Iterable<Product> produits = productDao.findAll();
@@ -47,6 +45,21 @@ public class ProductController {
         return produitsFiltres;
     }
 
+    //Calculer la marge des produits
+    @ApiOperation(value = "Récupère la liste des produits ainsi que la marge par produit")
+    @RequestMapping(value = "/AdminProduits", method = RequestMethod.GET)
+    public ArrayList calculerMargeProduit(){
+        List<Product> products= productDao.findAll();
+        int nbLignes = ((ArrayList) products).size();
+        ArrayList productsAvecMarge =  new ArrayList();
+        for(int i = 0; i < nbLignes ; i++){
+            int marge = 0;
+            marge = products.get(i).getPrix() - products.get(i).getPrixAchat();
+            System.out.println(products.get(i));
+            productsAvecMarge.add(products.get(i) + " : " + marge);
+        }
+        return productsAvecMarge;
+    }
 
     //Récupérer un produit par son Id
     @ApiOperation(value = "Récupère un produit grâce à son ID à condition que celui-ci soit en stock!")
@@ -100,7 +113,7 @@ public class ProductController {
     @GetMapping(value = "test/produits/{prix}")
     public List<Product>  testeDeRequetes(@PathVariable int prix) {
 
-        return productDao.chercherUnProduitCher(400);
+        return productDao.chercherUnProduitCher(prix);
     }
 
 
