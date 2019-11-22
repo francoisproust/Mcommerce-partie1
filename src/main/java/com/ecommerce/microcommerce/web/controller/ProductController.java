@@ -61,6 +61,12 @@ public class ProductController {
         return productsAvecMarge;
     }
 
+    @ApiOperation(value = "tri par nom de produit et ordre alphabétique")
+    @RequestMapping(value = "/ProduitsOrder", method = RequestMethod.GET)
+    public List<Product> trierProduitsParOrdreAlphabetique(){
+        return productDao.findAllByOrderByNomAsc();
+    }
+
     //Récupérer un produit par son Id
     @ApiOperation(value = "Récupère un produit grâce à son ID à condition que celui-ci soit en stock!")
     @GetMapping(value = "/Produits/{id}")
