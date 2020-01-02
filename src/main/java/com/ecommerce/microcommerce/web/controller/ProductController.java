@@ -2,6 +2,7 @@ package com.ecommerce.microcommerce.web.controller;
 
 import com.ecommerce.microcommerce.dao.ProductDao;
 import com.ecommerce.microcommerce.model.Product;
+import com.ecommerce.microcommerce.web.exceptions.ProduitGratuitException;
 import com.ecommerce.microcommerce.web.exceptions.ProduitIntrouvableException;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
@@ -31,17 +32,11 @@ public class ProductController {
     //Récupérer la liste des produits
     @RequestMapping(value = "/Produits", method = RequestMethod.GET)
     public MappingJacksonValue listeProduits() {
-
         Iterable<Product> produits = productDao.findAll();
-
         SimpleBeanPropertyFilter monFiltre = SimpleBeanPropertyFilter.serializeAllExcept("prixAchat");
-
         FilterProvider listDeNosFiltres = new SimpleFilterProvider().addFilter("monFiltreDynamique", monFiltre);
-
         MappingJacksonValue produitsFiltres = new MappingJacksonValue(produits);
-
         produitsFiltres.setFilters(listDeNosFiltres);
-
         return produitsFiltres;
     }
 
@@ -72,9 +67,7 @@ public class ProductController {
     @GetMapping(value = "/Produits/{id}")
 
     public Product afficherUnProduit(@PathVariable int id) {
-
         Product produit = productDao.findById(id);
-
         if(produit==null) throw new ProduitIntrouvableException("Le produit avec l'id " + id + " est INTROUVABLE. Écran Bleu si je pouvais.");
 
         return produit;
@@ -88,18 +81,21 @@ public class ProductController {
 
     public ResponseEntity<Void> ajouterProduit(@Valid @RequestBody Product product) {
 
-        Product productAdded =  productDao.save(product);
+        if (product.getPrix()==0){
+            throw new ProduitGratuitException("Le produit avec l'id" + product.getNom() + " est gratuit");
+        }else{
+            Product productAdded =  productDao.save(product);
+            if (productAdded == null)
+                return ResponseEntity.noContent().build();
 
-        if (productAdded == null)
-            return ResponseEntity.noContent().build();
+            URI location = ServletUriComponentsBuilder
+                    .fromCurrentRequest()
+                    .path("/{id}")
+                    .buildAndExpand(productAdded.getId())
+                    .toUri();
 
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(productAdded.getId())
-                .toUri();
-
-        return ResponseEntity.created(location).build();
+            return ResponseEntity.created(location).build();
+        }
     }
 
     @DeleteMapping (value = "/Produits/{id}")
@@ -110,8 +106,11 @@ public class ProductController {
 
     @PutMapping (value = "/Produits")
     public void updateProduit(@RequestBody Product product) {
-
-        productDao.save(product);
+        if (product.getPrix()==0){
+            throw new ProduitGratuitException("Le produit avec l'id" + product.getNom() + " est gratuit");
+        }else {
+            productDao.save(product);
+        }
     }
 
 
